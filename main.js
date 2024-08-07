@@ -56,5 +56,28 @@ let rltArr = [];
         util.ensureDir(genkouFolder);
         util.ensureDir(shinkiFolder);
         util.ensureDir(kekkaFolder);
+
+        
+        // Copy old files to genkouFolder
+        for (const oldFile of rlt.oldFiles) {
+            const sourcePath = path.join(config.old, oldFile);
+            const destPath = path.join(genkouFolder, oldFile);
+            if (fs.existsSync(sourcePath)) {
+                fs.copyFileSync(sourcePath, destPath);
+            } else {
+                console.warn(`Warning: ${sourcePath} does not exist.`);
+            }
+        }
+
+        // Copy new files to shinkiFolder
+        for (const newFile of rlt.newFiles) {
+            const sourcePath = path.join(config.new, newFile);
+            const destPath = path.join(shinkiFolder, newFile);
+            if (fs.existsSync(sourcePath)) {
+                fs.copyFileSync(sourcePath, destPath);
+            } else {
+                console.warn(`Warning: ${sourcePath} does not exist.`);
+            }
+        }
     }
 })();
