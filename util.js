@@ -16,13 +16,13 @@ export async function extractTextFromPdf(pdfPath) {
   const pdfData = new Uint8Array(pdfBuffer);
   const pdf = await getDocument({ data: pdfData }).promise;
 
+
   let fullText = '';
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const textContent = await page.getTextContent();
-    fullText += textContent.items.map(item => item.str).join(' ');
+    fullText += textContent.items.map(item => `${item.str}`).join('\n');
   }
-
   return fullText;
 }
 
