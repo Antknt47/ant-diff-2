@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from './util.js';
+import ExcelJS from 'exceljs';
 
 import config from './config.js';
 
@@ -132,7 +133,89 @@ let rltArr = [];
         // Write csv
         fs.writeFileSync(path.join(kekkaFolder, `result.csv`), csvContentPdfLib);
         console.log(`${rlt.newName}Difference rate: ${differenceRate}%`);
-        // Write diff report
+        // Write excel
+        const workbook = new ExcelJS.Workbook();
+
+        try {
+            // 创建一个新的工作簿
+            const workbook = new ExcelJS.Workbook();
+
+            // 添加一个工作表
+            const worksheet = workbook.addWorksheet('Sheet1');
+
+            // 设置标题行
+            worksheet.addRow([
+                'ファイル名',
+                '文字数（旧）',
+                '文字数（新）',
+                '文字差異率(%)',
+                '可視文字差異率(%)'
+            ]);
+
+            // 添加一些示例数据
+            //worksheet.addRow([rlt.newFiles, rlt.oldPDFText.length, rlt.newPDFText.length, differenceRate, differenceRateVisible]);
+
+            // 添加表格
+            const table = worksheet.addTable({
+                name: 'Table1',
+                ref: 'A1',
+                headerRow: true,
+                totalsRow: false,
+                columns: [
+                    { name: 'ファイル名' },
+                    { name: '文字数（旧）' },
+                    { name: '文字数（新）' },
+                    { name: '文字差異率(%)' },
+                    { name: '可視文字差異率(%)' }
+                ],
+                rows: [
+                    [rlt.newName, rlt.oldPDFText.length, rlt.newPDFText.length, differenceRate, differenceRateVisible],
+                ],
+                style: {
+                    theme: 'TableStyleMedium2',
+                    showFirstColumn: false,
+                    showLastColumn: false,
+                    showRowStripes: true,
+                    showColumnStripes: false,
+                }
+            });
+            worksheet.getColumn(1).width = 40;
+            worksheet.getColumn(2).width = 20;
+            worksheet.getColumn(3).width = 20;
+            worksheet.getColumn(4).width = 20;
+            worksheet.getColumn(5).width = 20;
+            worksheet.getColumn(6).width = 20;
+            // 设置字体样式
+            worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+                row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+                    if (colNumber === 1) {
+                        cell.alignment = { horizontal: 'left' };
+                    }
+                    if (rowNumber === 1) { // 第一行
+                        cell.style.font = {
+                            name: 'Yu Gothic', // 设置字体
+                            family: 4, // 字体家族，4 表示无衬线体
+                            size: 12, // 字体大小
+                            bold: true, // 标题加粗
+                            color: { argb: 'FFFFFFFF' } // 字体颜色（白色）
+                        };
+                        cell.style.alignment = { horizontal: 'center' }; // 中心对齐
+                    } else { // 其他行
+                        cell.style.font = {
+                            name: 'Yu Gothic', // 设置字体
+                            family: 4, // 字体家族，4 表示无衬线体
+                            size: 12, // 字体大小
+                            color: { argb: 'FF000000' } // 字体颜色（黑色）
+                        };
+                    }
+                });
+            });
+
+            await workbook.xlsx.writeFile("./test.xlsx");
+        } catch (err) {
+            console.error('error:', err);
+        }
+
         const reportHTML = util.getDiffReport(rlt.oldPDFText, rlt.newPDFText, rlt.newName);
         fs.writeFileSync(path.join(kekkaFolder, `${rlt.newName}.html`), reportHTML);
         util.ensureDir(`${kekkaFolder}/assert`);
@@ -140,5 +223,6 @@ let rltArr = [];
         fs.copyFileSync("./assert/diff2html.min.css",`${kekkaFolder}/assert/diff2html.min.css`);
         fs.copyFileSync("./assert/diff2html.min.js",`${kekkaFolder}/assert/diff2html.min.js`);
         fs.copyFileSync("./assert/github.min.css",`${kekkaFolder}/assert/github.min.css`);
+        
     }
 })();

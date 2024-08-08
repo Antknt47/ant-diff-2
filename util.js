@@ -4,6 +4,7 @@ import { createHash } from 'crypto';
 import { diffChars, createPatch } from "diff";
 import pdfPoppler from 'pdf-poppler';
 import * as Diff2HTML from "diff2html";
+import { Parser, Builder } from 'xml2js';
 
 export function ensureDir(dirPath) {
   if (!fs.existsSync(dirPath)) {
@@ -96,4 +97,30 @@ export function getDiffReport (oldStr, newStr, name) {
     `;
 
     return htmlContent;
+}
+
+export async function readXMLFile(filePath) {
+  const parser = new Parser();
+
+  try {
+    const data = fs.readFileSync(filePath);
+    const result = await parser.parseStringPromise(data);
+    return result;
+  } catch (err) {
+    console.error('parse error:', err);
+  }
+}
+
+export async function writeXMLFile(filePath, xmlObj) {
+  const builder = new Builder({
+    renderOpts: {
+      pretty: false,
+    },
+  });
+  const xmlContent = builder.buildObject(xmlObj);
+  try {
+    await fs.writeFileSync(filePath, xmlContent);
+  } catch (err) {
+    console.error('file write error:', err);
+  }
 }
