@@ -1,7 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
-
 import * as util from './util.js';
 
 import config from './config.js';
@@ -55,6 +53,7 @@ let rltArr = [];
         let obj = {
             // new
             newName: newName,
+            newPDF: path.join(config.new, pdf),
             newPDFText: newPDFText,
             newVisibleText: newVisibleText,
             newFiles: [
@@ -65,6 +64,7 @@ let rltArr = [];
 
             // old
             oldName: oldName,
+            oldPDF: path.join(config.old, oldpdf),
             oldPDFText: oldPDFText,
             oldVisibleText: oldVisibleText,
             oldFiles: [
@@ -81,15 +81,16 @@ let rltArr = [];
 
     for (const rlt of rltArr) {
         const rltFolder = `${config.result}/${rlt.newName}`;
-        const genkouFolder = `${config.result}/${rlt.newName}/1.現行`;
-        const shinkiFolder = `${config.result}/${rlt.newName}/2.新規`;
-        const kekkaFolder = `${config.result}/${rlt.newName}/3.結果`;
+        const genkouFolder = `${config.result}/${rlt.newName}/1_現行`;
+        const shinkiFolder = `${config.result}/${rlt.newName}/2_新規`;
+        const kekkaFolder = `${config.result}/${rlt.newName}/3_比較結果`;
 
         util.ensureDir(rltFolder);
         util.ensureDir(genkouFolder);
         util.ensureDir(shinkiFolder);
         util.ensureDir(kekkaFolder);
 
+        // ------ OLD -------
         // Copy old files to genkouFolder
         for (const oldFile of rlt.oldFiles) {
             const sourcePath = oldFile;
@@ -102,7 +103,11 @@ let rltArr = [];
         }
         // Output old text to genkouFolder
         fs.writeFileSync( path.join(genkouFolder, `${rlt.oldName}.txt`), rlt.oldPDFText);
+        // Convert old PDF to PNGs
+        util.convertPdfToImage(rlt.oldPDF, genkouFolder, rlt.oldName);
 
+
+        // ------ NEW -------
         // Copy new files to shinkiFolder
         for (const newFile of rlt.newFiles) {
             const sourcePath = newFile;
@@ -115,8 +120,10 @@ let rltArr = [];
         }
         // Output new text to shinkiFolder
         fs.writeFileSync(path.join(shinkiFolder, `${rlt.newName}.txt`), rlt.newPDFText);
+        // Convert old PDF to PNGs
+        util.convertPdfToImage(rlt.newPDF, shinkiFolder, rlt.newName);
 
-        // Output result
+        // ------ Output result ------
         const differenceRate = util.getDiffRate(rlt.oldPDFText, rlt.newPDFText);
         const differenceRateVisible = util.getDiffRate(rlt.oldVisibleText, rlt.newVisibleText);
         let csvContentPdfLib = 'File,From length,To length,Char diff(%),Visible diff(%)\n'; // CSV head
@@ -125,5 +132,13 @@ let rltArr = [];
         // Write csv
         fs.writeFileSync(path.join(kekkaFolder, `result.csv`), csvContentPdfLib);
         console.log(`${rlt.newName}Difference rate: ${differenceRate}%`);
+        // Write diff report
+        const reportHTML = util.getDiffReport(rlt.oldPDFText, rlt.newPDFText, rlt.newName);
+        fs.writeFileSync(path.join(kekkaFolder, `${rlt.newName}.html`), reportHTML);
+        util.ensureDir(`${kekkaFolder}/assert`);
+        fs.copyFileSync("./assert/diff2html-ui.min.js",`${kekkaFolder}/assert/diff2html-ui.min.js`);
+        fs.copyFileSync("./assert/diff2html.min.css",`${kekkaFolder}/assert/diff2html.min.css`);
+        fs.copyFileSync("./assert/diff2html.min.js",`${kekkaFolder}/assert/diff2html.min.js`);
+        fs.copyFileSync("./assert/github.min.css",`${kekkaFolder}/assert/github.min.css`);
     }
 })();
