@@ -1,11 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+
 import * as util from './util.js';
 
 import config from './config.js';
 
-console.log(config);
+// console.log(config);
 
 // Target list
 let rltArr = [];
@@ -27,42 +28,64 @@ let rltArr = [];
 
     // Process new PDFs and compare with old PDFs
     for (const pdf of newPDFs) {
-        const name = pdf.split('.')[0];
-        const pdfText = await util.extractTextFromPdf(path.join(config.new, pdf));
-        const visibleText = pdfText.replace(/[\s\u200B-\u200D\uFEFF]/g, ''); // Remove spaces and zero-width characters
-        const hash = util.hashString(visibleText);
-        const oldpdf = oldMap[hash];
-        const newJson = oldpdf.split('.')[0] + '.json';
-        const newOutputFiles = fs.readdirSync(config.new).filter(file => RegExp(name).test(file));
+        // New files
+        const newName = pdf.split('.')[0];
+        const newPDFText = await util.extractTextFromPdf(path.join(config.new, pdf));
+        const newVisibleText = newPDFText.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+        const newHash = util.hashString(newVisibleText);
+        const newOutputFiles = fs.readdirSync(config.new).filter(file => RegExp(newName).test(file));
 
-        // Create an object with relevant information
+        // Find old PDF
+        const oldpdf = oldMap[newHash];
+
+        if(oldpdf === undefined) {
+            console.warn(`${pdf} : Pair file cannot found.`);
+            continue;
+        }
+
+        // Get old name
+        const oldName = oldpdf.split('.')[0];
+
+        // Get new json from old folder.
+        const newJson = oldpdf.split('.')[0] + '.json';
+        const oldPDFText = await util.extractTextFromPdf(path.join(config.old, oldpdf));
+        const oldVisibleText = newPDFText.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+
+        // Create an object with test pair information
         let obj = {
-            name: name,
-            text: pdfText,
-            visibleText: visibleText,
-            hash: hash,
-            oldFiles: [
-                path.join(config.old, oldpdf),
-            ],
+            // new
+            newName: newName,
+            newPDFText: newPDFText,
+            newVisibleText: newVisibleText,
             newFiles: [
                 ...(newOutputFiles.map(str => path.join(config.new, str))),
                 path.join(config.old, newJson)
-            ]
+            ],
+            newHash: newHash,
+
+            // old
+            oldName: oldName,
+            oldPDFText: oldPDFText,
+            oldVisibleText: oldVisibleText,
+            oldFiles: [
+                path.join(config.old, oldpdf),
+            ],
+
         };
         rltArr.push(obj);
-        console.log(obj);
+        // console.log(obj);
     }
 
     // Ensure the result directory exists
     util.ensureDir(config.result);
 
     for (const rlt of rltArr) {
-        const rltFolder = `${config.result}/${rlt.name}`;
-        const genkouFolder = `${config.result}/${rlt.name}/1.現行`;
-        const shinkiFolder = `${config.result}/${rlt.name}/2.新規`;
-        const kekkaFolder = `${config.result}/${rlt.name}/3.結果`;
+        const rltFolder = `${config.result}/${rlt.newName}`;
+        const genkouFolder = `${config.result}/${rlt.newName}/1.現行`;
+        const shinkiFolder = `${config.result}/${rlt.newName}/2.新規`;
+        const kekkaFolder = `${config.result}/${rlt.newName}/3.結果`;
 
-        util.ensureDir(`${config.result}/${rlt.name}`);
+        util.ensureDir(rltFolder);
         util.ensureDir(genkouFolder);
         util.ensureDir(shinkiFolder);
         util.ensureDir(kekkaFolder);
@@ -77,6 +100,8 @@ let rltArr = [];
                 console.warn(`Warning: ${sourcePath} does not exist.`);
             }
         }
+        // Output old text to genkouFolder
+        fs.writeFileSync( path.join(genkouFolder, `${rlt.oldName}.txt`), rlt.oldPDFText);
 
         // Copy new files to shinkiFolder
         for (const newFile of rlt.newFiles) {
@@ -88,5 +113,17 @@ let rltArr = [];
                 console.warn(`Warning: ${sourcePath} does not exist.`);
             }
         }
+        // Output new text to shinkiFolder
+        fs.writeFileSync(path.join(shinkiFolder, `${rlt.newName}.txt`), rlt.newPDFText);
+
+        // Output result
+        const differenceRate = util.getDiffRate(rlt.oldPDFText, rlt.newPDFText);
+        const differenceRateVisible = util.getDiffRate(rlt.oldVisibleText, rlt.newVisibleText);
+        let csvContentPdfLib = 'File,From length,To length,Char diff(%),Visible diff(%)\n'; // CSV head
+        csvContentPdfLib += 
+            `${rlt.newName},${rlt.oldPDFText.length},${rlt.newPDFText.length},${differenceRate},${differenceRateVisible}\n`;
+        // Write csv
+        fs.writeFileSync(path.join(kekkaFolder, `result.csv`), csvContentPdfLib);
+        console.log(`${rlt.newName}Difference rate: ${differenceRate}%`);
     }
 })();
