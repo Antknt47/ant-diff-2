@@ -47,9 +47,6 @@ export function getDiffRate(oldStr, newStr) {
 }
 
 export async function convertPdfToImage(pdfPath, outputFolder, fileName) {
-  console.log(pdfPath);
-  console.log(outputFolder);
-  console.log(fileName);
   const options = {
     format: 'png',
     out_dir: outputFolder,
