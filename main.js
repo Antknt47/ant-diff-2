@@ -165,31 +165,6 @@ let rltArr = [];
                 }
             });
 
-            reportWorkSheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
-                row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-                    if (colNumber === 1) {
-                        cell.alignment = { horizontal: 'left' };
-                    }
-                    if (rowNumber === 1) { // 第一行
-                        cell.style.font = {
-                            name: 'Yu Gothic', // 设置字体
-                            family: 4, // 字体家族，4 表示无衬线体
-                            size: 12, // 字体大小
-                            bold: true, // 标题加粗
-                            color: { argb: 'FFFFFFFF' } // 字体颜色（白色）
-                        };
-                        cell.alignment = { horizontal: 'left' };
-                    } else { // 其他行
-                        cell.style.font = {
-                            name: 'Yu Gothic', // 设置字体
-                            family: 4, // 字体家族，4 表示无衬线体
-                            size: 12, // 字体大小
-                            color: { argb: 'FF000000' } // 字体颜色（黑色）
-                        };
-                    }
-                });
-            });
-
             await workbook.xlsx.writeFile("./test.xlsx");
         } catch (err) {
             console.error('error:', err);
