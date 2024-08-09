@@ -165,9 +165,9 @@ let rltArr = [];
                 }
             });
             // Read new and old PDF files
-            const imageWidth = 10240 / 9.1;
-            const imageHeight = 724 / 9.1;
-            const rowHeight = 18;
+            let imageWidth = 10240 / 9.1;
+            let imageHeight = 7240 / 9.1;
+            let rowHeight = 25;
 
             const oldImages = fs.readdirSync(genkouFolder).filter(file => file.endsWith('.png'));
             const newImages = fs.readdirSync(shinkiFolder).filter(file => file.endsWith('.png'));
@@ -194,7 +194,7 @@ let rltArr = [];
             }
 
             const newWorkSheet = workbook.getWorksheet("コンバートPDFイメージ");
-            imageHeight = 724 / 9;
+            imageHeight = 7240 / 9.09;
             currentRow = 1;
             for (const image of newImages) {
                 const imagePath = path.join(shinkiFolder, image);
