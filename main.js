@@ -128,7 +128,7 @@ let rltArr = [];
         const differenceRate = util.getDiffRate(rlt.oldPDFText, rlt.newPDFText);
         const differenceRateVisible = util.getDiffRate(rlt.oldVisibleText, rlt.newVisibleText);
         let csvContentPdfLib = 'File,From length,To length,Char diff(%),Visible diff(%)\n'; // CSV head
-        csvContentPdfLib += 
+        csvContentPdfLib +=
             `${rlt.newName},${rlt.oldPDFText.length},${rlt.newPDFText.length},${differenceRate.toFixed(2)},${differenceRateVisible.toFixed(2)}\n`;
         // Write csv
         fs.writeFileSync(path.join(kekkaFolder, `result.csv`), csvContentPdfLib);
@@ -164,6 +164,55 @@ let rltArr = [];
                     showColumnStripes: false,
                 }
             });
+            // Read new and old PDF files
+            const imageWidth = 1024;
+            const imageHeight = 724;
+            const rowHeight = 18;
+
+            const oldImages = fs.readdirSync(genkouFolder).filter(file => file.endsWith('.png'));
+            const newImages = fs.readdirSync(shinkiFolder).filter(file => file.endsWith('.png'));
+            const oldWorkSheet = workbook.getWorksheet("現行PDFイメージ");
+
+            let currentRow = 1;
+            for (const image of oldImages) {
+                const imagePath = path.join(genkouFolder, image);
+
+                oldWorkSheet.getCell(`B${currentRow}`).value = image;
+
+                const imageId = workbook.addImage({
+                    filename: imagePath,
+                    extension: 'png',
+                });
+
+                oldWorkSheet.addImage(imageId, {
+                    tl: { col: 1, row: currentRow },
+                    ext: { width: imageWidth, height: imageHeight },
+                    editAs: 'absolute'
+                });
+
+                currentRow += Math.ceil(imageHeight / rowHeight) + 2;
+            }
+
+            const newWorkSheet = workbook.getWorksheet("コンバートPDFイメージ");
+            currentRow = 1;
+            for (const image of newImages) {
+                const imagePath = path.join(shinkiFolder, image);
+
+                newWorkSheet.getCell(`B${currentRow}`).value = image;
+
+                const imageId = workbook.addImage({
+                    filename: imagePath,
+                    extension: 'png',
+                });
+
+                newWorkSheet.addImage(imageId, {
+                    tl: { col: 1, row: currentRow },
+                    ext: { width: imageWidth, height: imageHeight },
+                    editAs: 'absolute'
+                });
+
+                currentRow += Math.ceil(imageHeight / rowHeight) + 2; // +2行：一行显示文件名，一行显示图片
+            }
 
             await workbook.xlsx.writeFile("./test.xlsx");
         } catch (err) {
@@ -177,6 +226,6 @@ let rltArr = [];
         fs.copyFileSync("./assert/diff2html.min.css",`${kekkaFolder}/assert/diff2html.min.css`);
         fs.copyFileSync("./assert/diff2html.min.js",`${kekkaFolder}/assert/diff2html.min.js`);
         fs.copyFileSync("./assert/github.min.css",`${kekkaFolder}/assert/github.min.css`);
-        
+
     }
 })();
