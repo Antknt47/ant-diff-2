@@ -129,34 +129,19 @@ let rltArr = [];
         const differenceRateVisible = util.getDiffRate(rlt.oldVisibleText, rlt.newVisibleText);
         let csvContentPdfLib = 'File,From length,To length,Char diff(%),Visible diff(%)\n'; // CSV head
         csvContentPdfLib += 
-            `${rlt.newName},${rlt.oldPDFText.length},${rlt.newPDFText.length},${differenceRate},${differenceRateVisible}\n`;
+            `${rlt.newName},${rlt.oldPDFText.length},${rlt.newPDFText.length},${differenceRate.toFixed(2)},${differenceRateVisible.toFixed(2)}\n`;
         // Write csv
         fs.writeFileSync(path.join(kekkaFolder, `result.csv`), csvContentPdfLib);
         console.log(`${rlt.newName}Difference rate: ${differenceRate}%`);
+
         // Write excel
-        const workbook = new ExcelJS.Workbook();
-
         try {
-            // 创建一个新的工作簿
             const workbook = new ExcelJS.Workbook();
+            await workbook.xlsx.readFile('./templete.xlsx');
+            // Report sheet
+            const reportWorkSheet = workbook.getWorksheet('差分レポート');
 
-            // 添加一个工作表
-            const worksheet = workbook.addWorksheet('Sheet1');
-
-            // 设置标题行
-            worksheet.addRow([
-                'ファイル名',
-                '文字数（旧）',
-                '文字数（新）',
-                '文字差異率(%)',
-                '可視文字差異率(%)'
-            ]);
-
-            // 添加一些示例数据
-            //worksheet.addRow([rlt.newFiles, rlt.oldPDFText.length, rlt.newPDFText.length, differenceRate, differenceRateVisible]);
-
-            // 添加表格
-            const table = worksheet.addTable({
+            const table = reportWorkSheet.addTable({
                 name: 'Table1',
                 ref: 'A1',
                 headerRow: true,
@@ -179,14 +164,8 @@ let rltArr = [];
                     showColumnStripes: false,
                 }
             });
-            worksheet.getColumn(1).width = 40;
-            worksheet.getColumn(2).width = 20;
-            worksheet.getColumn(3).width = 20;
-            worksheet.getColumn(4).width = 20;
-            worksheet.getColumn(5).width = 20;
-            worksheet.getColumn(6).width = 20;
-            // 设置字体样式
-            worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
+
+            reportWorkSheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
                 row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
                     if (colNumber === 1) {
                         cell.alignment = { horizontal: 'left' };
@@ -199,7 +178,7 @@ let rltArr = [];
                             bold: true, // 标题加粗
                             color: { argb: 'FFFFFFFF' } // 字体颜色（白色）
                         };
-                        cell.style.alignment = { horizontal: 'center' }; // 中心对齐
+                        cell.alignment = { horizontal: 'left' };
                     } else { // 其他行
                         cell.style.font = {
                             name: 'Yu Gothic', // 设置字体

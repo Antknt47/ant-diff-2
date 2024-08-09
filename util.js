@@ -43,7 +43,7 @@ export function getDiffRate(oldStr, newStr) {
   });
   
   const maxLength = Math.max(oldStr.length, newStr.length);
-  const differenceRate = maxLength > 0 ? ((totalDiff / maxLength) * 100).toFixed(2) : 0;
+  const differenceRate = maxLength > 0 ? ((totalDiff / maxLength) * 100) : 0;
   return differenceRate;
 }
 
@@ -97,30 +97,4 @@ export function getDiffReport (oldStr, newStr, name) {
     `;
 
     return htmlContent;
-}
-
-export async function readXMLFile(filePath) {
-  const parser = new Parser();
-
-  try {
-    const data = fs.readFileSync(filePath);
-    const result = await parser.parseStringPromise(data);
-    return result;
-  } catch (err) {
-    console.error('parse error:', err);
-  }
-}
-
-export async function writeXMLFile(filePath, xmlObj) {
-  const builder = new Builder({
-    renderOpts: {
-      pretty: false,
-    },
-  });
-  const xmlContent = builder.buildObject(xmlObj);
-  try {
-    await fs.writeFileSync(filePath, xmlContent);
-  } catch (err) {
-    console.error('file write error:', err);
-  }
 }
