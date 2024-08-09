@@ -165,8 +165,8 @@ let rltArr = [];
                 }
             });
             // Read new and old PDF files
-            const imageWidth = 1024;
-            const imageHeight = 724;
+            const imageWidth = 10240 / 9.1;
+            const imageHeight = 724 / 9.1;
             const rowHeight = 18;
 
             const oldImages = fs.readdirSync(genkouFolder).filter(file => file.endsWith('.png'));
@@ -194,6 +194,7 @@ let rltArr = [];
             }
 
             const newWorkSheet = workbook.getWorksheet("コンバートPDFイメージ");
+            imageHeight = 724 / 9;
             currentRow = 1;
             for (const image of newImages) {
                 const imagePath = path.join(shinkiFolder, image);
