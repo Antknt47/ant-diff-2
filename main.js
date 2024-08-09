@@ -212,7 +212,9 @@ let rltArr = [];
                     editAs: 'absolute'
                 });
 
-                currentRow += Math.ceil(imageHeight / rowHeight) + 2; // +2行：一行显示文件名，一行显示图片
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                currentRow += Math.ceil(imageHeight / rowHeight) + 2;
             }
 
             await workbook.xlsx.writeFile("./test.xlsx");
